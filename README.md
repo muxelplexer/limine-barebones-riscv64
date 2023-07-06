@@ -1,9 +1,8 @@
-# Limine Bare Bones
+# Limine Bare Bones rv64
 
-This repository will show you how to set up a simple 64-bit x86_64 Long Mode higher half kernel using Limine.
+This repository will show you how to set up a simple riscv64 higher half kernel using Limine.
 
-This project can be built using the host compiler on most Linux distros on x86_64, but it's recommended you set up an x86_64-elf [cross compiler](https://wiki.osdev.org/GCC_Cross-Compiler).
-
+This project assumes that a riscv64 cross-compiler has already been set up.
 It is also recommended to cross reference the contents of this repository with [the Limine Bare Bones](https://wiki.osdev.org/Limine_Bare_Bones) OSDev wiki page.
 
 ## Where to go from here
