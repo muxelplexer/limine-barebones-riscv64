@@ -4,30 +4,27 @@ override MAKEFLAGS += -rR
 override IMAGE_NAME := barebones
 
 .PHONY: all
-all: $(IMAGE_NAME).iso
-
-.PHONY: all-hdd
-all-hdd: $(IMAGE_NAME).hdd
-
-.PHONY: run
-run: $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -m 2G -cdrom $(IMAGE_NAME).iso -boot d
+all: $(IMAGE_NAME).hdd
 
 .PHONY: run-uefi
-run-uefi: ovmf $(IMAGE_NAME).iso
-	qemu-system-x86_64 -M q35 -m 2G -bios ovmf/OVMF.fd -cdrom $(IMAGE_NAME).iso -boot d
-
-.PHONY: run-hdd
-run-hdd: $(IMAGE_NAME).hdd
-	qemu-system-x86_64 -M q35 -m 2G -hda $(IMAGE_NAME).hdd
-
-.PHONY: run-hdd-uefi
 run-hdd-uefi: ovmf $(IMAGE_NAME).hdd
-	qemu-system-x86_64 -M q35 -m 2G -bios ovmf/OVMF.fd -hda $(IMAGE_NAME).hdd
+	qemu-system-riscv64 \
+        -m 512M \
+        -M virt \
+        -cpu rv64 \
+        -drive if=pflash,unit=1,format=raw,file=ovmf/OVMF.fd \
+        -net none \
+        -smp 4 \
+        -device ramfb \
+        -device qemu-xhci \
+        -device usb-kbd \
+        -device virtio-blk-device,drive=hd0 \
+        -drive id=hd0,format=raw,file=${IMAGE_NAME}.hdd \
+        -serial stdio
 
 ovmf:
 	mkdir -p ovmf
-	cd ovmf && curl -Lo OVMF-X64.zip https://efi.akeo.ie/OVMF/OVMF-X64.zip && unzip OVMF-X64.zip
+	cd ovmf && curl -o OVMF.fd https://retrage.github.io/edk2-nightly/bin/RELEASERISCV64_VIRT.fd && dd if=/dev/zero of=OVMF.fd bs=1 count=0 seek=33554432
 
 limine:
 	git clone https://github.com/limine-bootloader/limine.git --branch=v5.x-branch-binary --depth=1
@@ -36,21 +33,6 @@ limine:
 .PHONY: kernel
 kernel:
 	$(MAKE) -C kernel
-
-$(IMAGE_NAME).iso: limine kernel
-	rm -rf iso_root
-	mkdir -p iso_root
-	cp kernel/kernel.elf \
-		limine.cfg limine/limine-bios.sys limine/limine-bios-cd.bin limine/limine-uefi-cd.bin iso_root/
-	mkdir -p iso_root/EFI/BOOT
-	cp limine/BOOT*.EFI iso_root/EFI/BOOT/
-	xorriso -as mkisofs -b limine-bios-cd.bin \
-		-no-emul-boot -boot-load-size 4 -boot-info-table \
-		--efi-boot limine-uefi-cd.bin \
-		-efi-boot-part --efi-boot-image --protective-msdos-label \
-		iso_root -o $(IMAGE_NAME).iso
-	./limine/limine bios-install $(IMAGE_NAME).iso
-	rm -rf iso_root
 
 $(IMAGE_NAME).hdd: limine kernel
 	rm -f $(IMAGE_NAME).hdd
@@ -73,7 +55,7 @@ $(IMAGE_NAME).hdd: limine kernel
 
 .PHONY: clean
 clean:
-	rm -rf iso_root $(IMAGE_NAME).iso $(IMAGE_NAME).hdd
+	rm -rf $(IMAGE_NAME).hdd
 	$(MAKE) -C kernel clean
 
 .PHONY: distclean

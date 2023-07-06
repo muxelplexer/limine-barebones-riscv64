@@ -18,11 +18,11 @@ endef
 # It is highly recommended to use a custom built cross toolchain to build a kernel.
 # We are only using "cc" as a placeholder here. It may work by using
 # the host system's toolchain, but this is not guaranteed.
-override DEFAULT_CC := cc
+override DEFAULT_CC := riscv64-unknown-elf-gcc
 $(eval $(call DEFAULT_VAR,CC,$(DEFAULT_CC)))
 
 # Same thing for "ld" (the linker).
-override DEFAULT_LD := ld
+override DEFAULT_LD := riscv64-unknown-elf-ld
 $(eval $(call DEFAULT_VAR,LD,$(DEFAULT_LD)))
 
 # User controllable C flags.
@@ -51,14 +51,7 @@ override CFLAGS += \
     -fno-stack-check \
     -fno-lto \
     -fPIE \
-    -m64 \
-    -march=x86-64 \
-    -mabi=sysv \
-    -mno-80387 \
-    -mno-mmx \
-    -mno-sse \
-    -mno-sse2 \
-    -mno-red-zone
+    -march=rv64gc
 
 # Internal C preprocessor flags that should not be changed by the user.
 override CPPFLAGS := \
@@ -69,12 +62,10 @@ override CPPFLAGS := \
 
 # Internal linker flags that should not be changed by the user.
 override LDFLAGS += \
-    -m elf_x86_64 \
+    -m elf64lriscv \
     -nostdlib \
     -static \
-    -pie \
     --no-dynamic-linker \
-    -z text \
     -z max-page-size=0x1000 \
     -T linker.ld
 

@@ -1,7 +1,3 @@
-/* Tell the linker that we want an x86_64 ELF64 output file */
-OUTPUT_FORMAT(elf64-x86-64)
-OUTPUT_ARCH(i386:x86-64)
-
 /* We want the symbol _start to be our entry point */
 ENTRY(_start)
 
@@ -22,6 +18,7 @@ SECTIONS
     /* Any address in this region will do, but often 0xffffffff80000000 is chosen as */
     /* that is the beginning of the region. */
     . = 0xffffffff80000000;
+    kernel_start = .;
 
     .text : {
         *(.text .text.*)
@@ -39,6 +36,8 @@ SECTIONS
 
     .data : {
         *(.data .data.*)
+        __global_pointer$ = . + 0x800;
+        *(.sdata .sdata.*);
     } :data
 
     /* Dynamic section for relocations, both in its own PHDR and inside data PHDR */
@@ -53,11 +52,6 @@ SECTIONS
     .bss : {
         *(COMMON)
         *(.bss .bss.*)
+        *(.bss .bss.*)
     } :data
-
-    /* Discard .note.* and .eh_frame since they may cause issues on some hosts. */
-    /DISCARD/ : {
-        *(.eh_frame)
-        *(.note .note.*)
-    }
 }
